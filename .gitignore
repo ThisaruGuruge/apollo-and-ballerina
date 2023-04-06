@@ -1,0 +1,11 @@
+# JS
+node_modules
+dist
+
+# Ballerina
+target
+build
+Depencies.toml
+
+# MacOS
+.DS_Store

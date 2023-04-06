@@ -1,0 +1,9 @@
+[dbConfig]
+host = "127.0.0.1"
+port = 3306
+username = "root"
+password = "Test@123"
+database = "ballerina_social_media"
+
+[serviceConfigs]
+port = 9090
