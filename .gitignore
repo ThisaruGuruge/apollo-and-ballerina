@@ -5,7 +5,14 @@ dist
 # Ballerina
 target
 build
-Depencies.toml
+Dependencies.toml
 
 # MacOS
 .DS_Store
+
+# IDEs
+.idea
+.vscode
+
+# Others
+*.log
