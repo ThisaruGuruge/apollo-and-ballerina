@@ -1,5 +1,5 @@
-import ballerina/io;
 import ballerina/graphql;
+import ballerina/io;
 
 type SocialMediaService distinct service object {
     *graphql:Service;

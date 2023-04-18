@@ -1,28 +1,51 @@
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
+import { makeExecutableSchema } from '@graphql-tools/schema';
+import { createServer } from 'http';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
+import { WebSocketServer } from 'ws';
+import { useServer } from 'graphql-ws/lib/use/ws';
 import config from 'config';
 import cors from 'cors';
 import express from 'express';
-import http from 'http';
 
 import { typeDefs } from "./graphql/schema.js";
 import { resolvers } from "./graphql/resolvers.js";
 import { getHttpContext, UserContext } from './utils.js';
-
-const app = express();
-const httpServer = http.createServer(app);
-const server = new ApolloServer<UserContext>({
-    typeDefs,
-    resolvers,
-    plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
-});
 
 interface ServerConfig {
     port: number;
 }
 
 const { port }: ServerConfig = config.get('server');
+
+const schema = makeExecutableSchema({ typeDefs, resolvers });
+
+const app = express();
+const httpServer = createServer(app);
+
+const wsServer = new WebSocketServer({
+    server: httpServer,
+    path: '/social-media',
+});
+
+const serverCleanup = useServer({ schema }, wsServer);
+
+const server = new ApolloServer<UserContext>({
+    schema,
+    plugins: [
+        ApolloServerPluginDrainHttpServer({ httpServer }),
+        {
+            async serverWillStart() {
+                return {
+                    async drainServer() {
+                        await serverCleanup.dispose();
+                    },
+                };
+            },
+        },
+    ],
+});
 
 await server.start();
 app.use(
@@ -34,5 +57,6 @@ app.use(
     }),
 );
 
-await new Promise<void>((resolve) => httpServer.listen({ port }, resolve));
-console.log(`🚀 Server ready at http://localhost:${port}/social-media`);
+httpServer.listen(port, () => {
+    console.log(`🚀 Server ready at http://localhost:${port}/social-media`)
+});

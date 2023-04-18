@@ -17,7 +17,11 @@ final mysql:Client dbClient = check new (dbConfig.host, dbConfig.username, dbCon
 
 isolated function getUser(string userId) returns UserData|error {
     sql:ParameterizedQuery query = `SELECT * FROM user WHERE id = ${userId}`;
-    return dbClient->queryRow(query);
+    UserData|error user = dbClient->queryRow(query);
+    if user is error {
+        return error("User not found", user);
+    }
+    return user;
 }
 
 isolated function getUsers() returns stream<UserData, error?> {

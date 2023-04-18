@@ -1,7 +1,7 @@
-import ballerina/uuid;
-import ballerina/log;
-import xlibb/pubsub;
 import ballerina/graphql;
+import ballerina/io;
+import ballerina/uuid;
+import xlibb/pubsub;
 
 configurable record {int port;} serviceConfigs = ?;
 
@@ -14,14 +14,14 @@ configurable record {int port;} serviceConfigs = ?;
         enabled: true
     }
 }
-service SocialMediaService /social\-media on new graphql:Listener(serviceConfigs.port) {
+service SocialMediaService /social on new graphql:Listener(serviceConfigs.port) {
     private final pubsub:PubSub postPubSub;
-    private final string POST_TOPIC = "post";
+    private final string POST_TOPIC = "post-created";
 
     isolated function init() returns error? {
         self.postPubSub = new(false);
         check self.postPubSub.createTopic(self.POST_TOPIC);
-        log:printInfo(string `💃 Server ready at http://localhost:${serviceConfigs.port}/social-media`);
+        io:println(string `💃 Server ready at http://localhost:${serviceConfigs.port}/social-media`);
     }
 
     # Returns the list of users.
@@ -88,12 +88,12 @@ service SocialMediaService /social\-media on new graphql:Listener(serviceConfigs
         string user_id = check authenticate(context);
         check createPost({
             id,
+            user_id,
             title: newPost.title,
-            content: newPost.content,
-            user_id
+            content: newPost.content
         });
         Post post = new (check getPost(id));
-        check self.postPubSub.publish(self.POST_TOPIC, post);
+        check self.postPubSub.publish(self.POST_TOPIC, post, -1);
         return post;
     }
 
@@ -112,6 +112,6 @@ service SocialMediaService /social\-media on new graphql:Listener(serviceConfigs
     # Subscribe to new posts.
     # + return - Stream of new posts
     resource function subscribe newPosts() returns stream<Post, error?>|error {
-        return self.postPubSub.subscribe(self.POST_TOPIC, -1);
+        return self.postPubSub.subscribe(self.POST_TOPIC, 10, -1);
     }
 }

@@ -4,6 +4,10 @@ import { Post } from "../types/post.js";
 import { User } from "../types/user.js";
 import { UserContext } from "../utils.js";
 import { authenticate, authorize } from "../auth/auth.js";
+import { PubSub } from 'graphql-subscriptions';
+
+const POST_TOPIC = "post-created";
+const pubsub = new PubSub();
 
 export const resolvers = {
     Query: {
@@ -34,7 +38,11 @@ export const resolvers = {
             authenticate(token);
             const id = randomUUID();
             await createPost(id, token, title, content);
-            return await getPost(id);
+            const post = await getPost(id);
+            pubsub.publish(POST_TOPIC, {
+                newPosts: post
+            });
+            return post;
         },
 
         deletePost: async (_parent: any, { id }, { token }: UserContext) => {
@@ -54,7 +62,9 @@ export const resolvers = {
     },
 
     Subscription: {
-        newPosts: async () => { }
+        newPosts: {
+            subscribe: () => pubsub.asyncIterator([POST_TOPIC])
+        }
     },
 
     User: {
