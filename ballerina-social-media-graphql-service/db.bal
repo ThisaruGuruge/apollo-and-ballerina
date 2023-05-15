@@ -1,6 +1,7 @@
 import ballerina/sql;
 import ballerinax/mysql;
 import ballerinax/mysql.driver as _;
+import ballerina/io;
 
 type DbConfig record {
     string host;
@@ -31,7 +32,8 @@ isolated function getUsers() returns stream<UserData, error?> {
 
 isolated function createUser(UserData user) returns error? {
     sql:ParameterizedQuery query = `INSERT INTO user (id, name, email) VALUES (${user.id}, ${user.name})`;
-    _ = check dbClient->execute(query);
+    sql:ExecutionResult executionResult = check dbClient->execute(query);
+    io:println(executionResult);
 }
 
 isolated function deleteUser(string userId) returns error? {

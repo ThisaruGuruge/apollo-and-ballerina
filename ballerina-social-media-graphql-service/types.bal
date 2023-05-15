@@ -1,5 +1,4 @@
 import ballerina/graphql;
-import ballerina/io;
 
 type SocialMediaService distinct service object {
     *graphql:Service;
@@ -81,7 +80,6 @@ isolated service class Post {
     # The `author` of the Post
     # + return - The `User` posted the Post
     isolated resource function get author() returns User|error {
-        io:println("[Post Data]: ", self.postData);
         UserData user = check getUser(self.postData.user_id);
         return new User(user);
     }

@@ -7,3 +7,12 @@ distribution = "2201.4.0"
 [build-options]
 observabilityIncluded = true
 
+[persist]
+datastore = "mysql"
+module = "social_media.db"
+
+[[platform.java11.dependency]]
+groupId = "io.ballerina.stdlib"
+artifactId = "persist-native"
+version = "0.3.1"
+

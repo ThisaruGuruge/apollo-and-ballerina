@@ -5,6 +5,8 @@ import xlibb/pubsub;
 
 configurable record {int port;} serviceConfigs = ?;
 
+const POST_TOPIC = "post-created";
+
 @graphql:ServiceConfig {
     contextInit: contextInit,
     cors: {
@@ -14,13 +16,12 @@ configurable record {int port;} serviceConfigs = ?;
         enabled: true
     }
 }
-service SocialMediaService /social on new graphql:Listener(serviceConfigs.port) {
+service SocialMediaService "/social-media" on new graphql:Listener(serviceConfigs.port) {
     private final pubsub:PubSub postPubSub;
-    private final string POST_TOPIC = "post-created";
 
     isolated function init() returns error? {
-        self.postPubSub = new(false);
-        check self.postPubSub.createTopic(self.POST_TOPIC);
+        self.postPubSub = new (false);
+        check self.postPubSub.createTopic(POST_TOPIC);
         io:println(string `💃 Server ready at http://localhost:${serviceConfigs.port}/social-media`);
     }
 
@@ -54,12 +55,7 @@ service SocialMediaService /social on new graphql:Listener(serviceConfigs.port) 
     # + return - Created user
     remote function createUser(NewUser user) returns User|error {
         string id = uuid:createType1AsString();
-        check createUser(
-            {
-            id,
-            name: user.name,
-            age: user.age
-        });
+        check createUser({id, name: user.name, age: user.age});
         return new ({
             id,
             name: user.name,
@@ -92,8 +88,9 @@ service SocialMediaService /social on new graphql:Listener(serviceConfigs.port) 
             title: newPost.title,
             content: newPost.content
         });
-        Post post = new (check getPost(id));
-        check self.postPubSub.publish(self.POST_TOPIC, post, -1);
+        PostData postData = check getPost(id);
+        Post post = new (postData);
+        check self.postPubSub.publish(POST_TOPIC, postData.cloneReadOnly(), -1);
         return post;
     }
 
@@ -112,6 +109,8 @@ service SocialMediaService /social on new graphql:Listener(serviceConfigs.port) 
     # Subscribe to new posts.
     # + return - Stream of new posts
     resource function subscribe newPosts() returns stream<Post, error?>|error {
-        return self.postPubSub.subscribe(self.POST_TOPIC, 10, -1);
+        stream<PostData, error?> posts = check self.postPubSub.subscribe(POST_TOPIC, 10, -1);
+        return from PostData postData in posts
+            select new (postData);
     }
 }
