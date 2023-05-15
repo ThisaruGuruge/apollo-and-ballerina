@@ -6,6 +6,7 @@ dist
 target
 build
 Dependencies.toml
+generated
 
 # MacOS
 .DS_Store
