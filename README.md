@@ -133,10 +133,18 @@ The `resources` directory includes the database initialization script.
 
 1. Download and install [NodeJS](https://nodejs.org/en/download)
 2. Download and install [MySQL](https://www.mysql.com/downloads/)
-3. Execute the `init_db.sql` file in the MySQL CLI.
-   ```shell
-   source resources/init_db.sql
-   ```
+3. Run the docker image for the Database using the following command:
+
+    ```shell
+    docker compose -f docker-compose-apollo-db.yml up
+    ```
+
+    OR
+
+    Execute the `init_db.sql` file in the MySQL CLI.
+    ```shell
+    source resources/init_db.sql
+    ```
 4. Run the GraphQL service using by executing the following command:
    ```shell
    npm start
@@ -186,10 +194,18 @@ The `resources` directory includes the database initialization scripts.
 
 1. Download and install [Ballerina](https://ballerina.io/downloads)
 2. Download and install [MySQL](https://www.mysql.com/downloads/)
-3. Execute the `init_db.sql` file in the MySQL CLI.
-   ```shell
-   source resources/init_db.sql
-   ```
+3. Run the docker image for the Database using the following command:
+
+    ```shell
+    docker compose -f docker-compose-ballerina-db.yml up
+    ```
+
+    OR
+
+    Execute the `init_db.sql` file in the MySQL CLI.
+    ```shell
+    source resources/init_db.sql
+    ```
 4. Run the Ballerina service by executing the following command inside the `ballerina-social-media-graphql-service` directory:
    ```shell
    bal run
