@@ -1,68 +1,54 @@
-import ballerina/sql;
-import ballerinax/mysql;
-import ballerinax/mysql.driver as _;
-import ballerina/io;
+import graphql_social_media.db;
 
-type DbConfig record {
-    string host;
-    int port;
-    string username;
-    string password;
-    string database;
-};
+final db:Client dbClient = check new ();
 
-configurable DbConfig dbConfig = ?;
+type UserWithPosts record {|
+    *db:User;
+    db:Post[] posts;
+|};
 
-// Create a mysql client to be used for remote function calls.
-final mysql:Client dbClient = check new (dbConfig.host, dbConfig.username, dbConfig.password, dbConfig.database, dbConfig.port);
+isolated function getUsers() returns stream<db:User, error?> {
+    return dbClient->/users;
+}
 
-isolated function getUser(string userId) returns UserData|error {
-    sql:ParameterizedQuery query = `SELECT * FROM user WHERE id = ${userId}`;
-    UserData|error user = dbClient->queryRow(query);
-    if user is error {
-        return error("User not found", user);
+isolated function getUser(string id) returns db:User|error {
+    return dbClient->/users/[id];
+}
+
+isolated function createUser(db:User user) returns db:User|error {
+    string[] ids = check dbClient->/users.post([user]);
+    if ids.length() != 1 {
+        return error ("Failed to create user");
     }
-    return user;
+    return getUser(ids[0]);
 }
 
-isolated function getUsers() returns stream<UserData, error?> {
-    sql:ParameterizedQuery query = `SELECT * FROM user`;
-    return dbClient->query(query);
+isolated function deleteUser(string id) returns db:User|error {
+    return dbClient->/users/[id].delete;
 }
 
-isolated function createUser(UserData user) returns error? {
-    sql:ParameterizedQuery query = `INSERT INTO user (id, name, email) VALUES (${user.id}, ${user.name})`;
-    sql:ExecutionResult executionResult = check dbClient->execute(query);
-    io:println(executionResult);
-}
-
-isolated function deleteUser(string userId) returns error? {
-    sql:ParameterizedQuery query = `DELETE FROM user WHERE id = ${userId}`;
-    _ = check dbClient->execute(query);
-}
-
-// Get posts by user id.
-isolated function getPosts(string? userId) returns stream<PostData, error?> {
-    sql:ParameterizedQuery query;
-    if userId is string {
-        query = `SELECT * FROM post WHERE user_id = ${userId}`;
-    } else {
-        query = `SELECT * FROM post`;
+isolated function getPosts(string? authorId) returns db:Post[]|error {
+    if authorId is () {
+        stream<db:Post, error?> posts = dbClient->/posts;
+        return from db:Post post in posts select post;
     }
-    return dbClient->query(query);
+    UserWithPosts user = check dbClient->/users/[authorId];
+    return user.posts;
 }
 
-isolated function getPost(string id) returns PostData|error {
-    sql:ParameterizedQuery query = `SELECT * FROM post WHERE id = ${id}`;
-    return dbClient->queryRow(query);
+isolated function getPost(string id) returns db:Post|error {
+    return dbClient->/posts/[id];
 }
 
-isolated function createPost(PostData post) returns error? {
-    sql:ParameterizedQuery query = `INSERT INTO post (id, user_id, title, content) VALUES (${post.id}, ${post.user_id}, ${post.title}, ${post.content})`;
-    _ = check dbClient->execute(query);
+isolated function createPost(db:Post post) returns db:Post|error {
+    string[] ids = check dbClient->/posts.post([post]);
+    if ids.length() != 1 {
+        return error ("Failed to create post");
+    }
+    string postId = ids[0];
+    return dbClient->/posts/[postId];
 }
 
-isolated function deletePost(string id) returns error? {
-    sql:ParameterizedQuery query = `DELETE FROM post WHERE id = ${id}`;
-    _ = check dbClient->execute(query);
+isolated function deletePost(string id) returns db:Post|error {
+    return dbClient->/posts/[id].delete;
 }

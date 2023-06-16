@@ -1,18 +1,18 @@
 [package]
-org = "wso2"
-name = "social_media"
+org = "integration_samples"
+name = "graphql_social_media"
 version = "0.1.0"
-distribution = "2201.4.0"
+distribution = "2201.6.0"
 
 [build-options]
 observabilityIncluded = true
 
 [persist]
 datastore = "mysql"
-module = "social_media.db"
+module = "graphql_social_media.db"
 
 [[platform.java11.dependency]]
 groupId = "io.ballerina.stdlib"
-artifactId = "persist-native"
-version = "0.3.1"
+artifactId = "persist.sql-native"
+version = "1.0.0"
 

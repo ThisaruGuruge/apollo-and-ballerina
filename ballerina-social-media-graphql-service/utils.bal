@@ -10,5 +10,5 @@ isolated function contextInit(http:RequestContext requestCntext, http:Request re
 }
 
 isolated function getToken(graphql:Context context) returns string|error {
-    return check context.get("token").ensureType();
+    return context.get("token").ensureType();
 }
