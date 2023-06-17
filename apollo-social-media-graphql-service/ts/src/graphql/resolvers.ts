@@ -21,7 +21,7 @@ export const resolvers = {
         },
 
         deleteUser: async (_parent: any, { id }, { token }: UserContext) => {
-            authenticate(token);
+            await authenticate(token);
             authorize(token, id);
             const user = await getUser(token);
             if (user) {
@@ -32,7 +32,7 @@ export const resolvers = {
         },
 
         createPost: async (_parent: any, { newPost: { title, content } }, { token }: UserContext) => {
-            authenticate(token);
+            await authenticate(token);
             const id = randomUUID();
             await createPost(id, token, title, content);
             const post = await getPost(id);
@@ -41,7 +41,7 @@ export const resolvers = {
         },
 
         deletePost: async (_parent: any, { id }, { token }: UserContext) => {
-            authenticate(token);
+            await authenticate(token);
             const post = await getPost(id);
             if (!post) {
                 throw new Error("Post not found");
