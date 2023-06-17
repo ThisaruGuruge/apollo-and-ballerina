@@ -34,16 +34,6 @@ class PostSubscriber implements AsyncIterator<NewPosts> {
     this.consumer = kafka.consumer({ groupId });
   }
 
-  public addPost(post: Post) {
-    console.log(post);
-    if (this.pullQueue.length !== 0) {
-      const value: NewPosts = { newPosts: post };
-      this.pullQueue.shift()({ value, done: false });
-      return;
-    }
-    this.postsQueue.push(post);
-  }
-
   public async next(): Promise<IteratorResult<NewPosts>> {
     if (!this.isSubscribed) {
       await this.subscribe();
@@ -72,6 +62,16 @@ class PostSubscriber implements AsyncIterator<NewPosts> {
       },
     });
     this.isSubscribed = true;
+  }
+
+  private addPost(post: Post) {
+    console.log(post);
+    if (this.pullQueue.length !== 0) {
+      const value: NewPosts = { newPosts: post };
+      this.pullQueue.shift()({ value, done: false });
+      return;
+    }
+    this.postsQueue.push(post);
   }
 
   public [Symbol.asyncIterator]() {
