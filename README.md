@@ -157,7 +157,7 @@ The `resources` directory includes the database initialization script.
 
    This will log something similar to this:
    ```shell
-   🚀 Server ready at http://localhost:4000/social-media
+   🚀 Server ready at http://localhost:4000/graphql
    ```
 
 5. Open the link in a browser to access the GraphQL service using the Apollo sandbox.
