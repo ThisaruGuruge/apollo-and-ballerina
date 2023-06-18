@@ -2,11 +2,12 @@ import ballerina/graphql;
 import ballerina/test;
 import ballerina/websocket;
 
+string serviceUrl = string `http://localhost:${serviceConfigs.port}/graphql`;
+final graphql:Client graphqlClient = check new (serviceUrl);
+
 @test:Config
 isolated function testCreateUserMutation() returns error? {
-    string url = string `http://localhost:${serviceConfigs.port}/graphql`;
     string document = check getGraphQlDocumentFromFile("create-users-mutation");
-    graphql:Client graphqlClient = check new (url);
     json response = check graphqlClient->execute(document);
     json expectedResponse = check getJsonContentFromFile("create-users-mutation");
     test:assertEquals(response, expectedResponse);
@@ -16,9 +17,7 @@ isolated function testCreateUserMutation() returns error? {
     dependsOn: [testCreateUserMutation]
 }
 isolated function testUsersQuery() returns error? {
-    string url = string `http://localhost:${serviceConfigs.port}/graphql`;
     string document = check getGraphQlDocumentFromFile("users-query");
-    graphql:Client graphqlClient = check new (url);
     UsersResponse response = check graphqlClient->execute(document);
     test:assertTrue(response.data.users.length() >= 3);
     storeUsers(response.data.users);
@@ -29,9 +28,7 @@ isolated function testUsersQuery() returns error? {
 }
 isolated function testUserQuery() returns error? {
     readonly & UserData user = pickLatestUser();
-    string url = string `http://localhost:${serviceConfigs.port}/graphql`;
     string document = check getGraphQlDocumentFromFile("user-query");
-    graphql:Client graphqlClient = check new (url);
     map<json> variables = {id: user.id};
     json response = check graphqlClient->execute(document, variables);
     json expectedResponse = {data: {user: {name: user.name, age: user.age}}};
@@ -43,9 +40,7 @@ isolated function testUserQuery() returns error? {
 }
 isolated function testCreatePostMutation() returns error? {
     readonly & UserData user = pickLatestUser();
-    string url = string `http://localhost:${serviceConfigs.port}/graphql`;
     string document = check getGraphQlDocumentFromFile("create-post-mutation");
-    graphql:Client graphqlClient = check new (url);
     map<json> variables = {title: "Post title", content: "Post content"};
     map<string> headers = {Authorization: user.id};
     json response = check graphqlClient->execute(document, variables, headers = headers);
@@ -58,9 +53,7 @@ isolated function testCreatePostMutation() returns error? {
 }
 isolated function testPostQuery() returns error? {
     readonly & UserData user = pickLatestUser();
-    string url = string `http://localhost:${serviceConfigs.port}/graphql`;
     string document = check getGraphQlDocumentFromFile("posts-query");
-    graphql:Client graphqlClient = check new (url);
     map<json> variables = {id: user.id};
     json response = check graphqlClient->execute(document, variables);
     json expectedResponse = check getJsonContentFromFile("posts-query");
@@ -72,9 +65,7 @@ isolated function testPostQuery() returns error? {
 }
 isolated function testDeletePostMutation() returns error? {
     readonly & UserData user = pickLatestUser();
-    string url = string `http://localhost:${serviceConfigs.port}/graphql`;
     string document = check getGraphQlDocumentFromFile("posts-query-with-post-id");
-    graphql:Client graphqlClient = check new (url);
     map<json> variables = {userId: user.id};
     UserPostResponse response = check graphqlClient->execute(document, variables);
     PostData[] userPosts = response.data.posts;
@@ -95,9 +86,7 @@ isolated function testDeletePostMutation() returns error? {
 isolated function testPostSubscription() returns error? {
     worker publisher returns error? {
         readonly & UserData user = pickLatestUser();
-        string url = string `http://localhost:${serviceConfigs.port}/graphql`;
         string document = check getGraphQlDocumentFromFile("create-post-mutation");
-        graphql:Client graphqlClient = check new (url);
         foreach int i in 0 ..< 5 {
             string title = string `Post title ${i}`;
             string content = string `Post content ${i}`;
@@ -130,10 +119,8 @@ isolated function testPostSubscription() returns error? {
 }
 isolated function testAuthenticationFailure() returns error? {
     readonly & UserData user = pickLatestUser();
-    string url = string `http://localhost:${serviceConfigs.port}/graphql`;
-    string document = check getGraphQlDocumentFromFile("create-post-mutation");
-    graphql:Client graphqlClient = check new (url);
 
+    string document = check getGraphQlDocumentFromFile("create-post-mutation");
     map<json> variables = {title: "Post title", content: "Post content"};
     json response = check graphqlClient->execute(document, variables);
     json expectedResponse = check getJsonContentFromFile("authentication-failure-create-post-mutation");
@@ -156,8 +143,6 @@ isolated function testAuthenticationFailure() returns error? {
 }
 isolated function testAuthorizationFailure() returns error? {
     readonly & UserData user = pickLatestUser();
-    string url = string `http://localhost:${serviceConfigs.port}/graphql`;
-    graphql:Client graphqlClient = check new (url);
     string document = check getGraphQlDocumentFromFile("delete-user-mutation");
     readonly & UserData differentUser = check pickUserExecpet(user.id);
     map<string> headers = {Authorization: differentUser.id};
@@ -171,9 +156,7 @@ isolated function testAuthorizationFailure() returns error? {
 }
 isolated function testDeleteUserMutation() returns error? {
     readonly & UserData[] users = getAllUsers();
-    string url = string `http://localhost:${serviceConfigs.port}/graphql`;
     string document = check getGraphQlDocumentFromFile("delete-user-mutation");
-    graphql:Client graphqlClient = check new (url);
     foreach UserData user in users {
         map<json> variables = {id: user.id};
         map<string> headers = {Authorization: user.id};
