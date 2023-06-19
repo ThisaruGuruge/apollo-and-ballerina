@@ -27,8 +27,8 @@ isolated function testUsersQuery() returns error? {
     dependsOn: [testUsersQuery]
 }
 isolated function testUserQuery() returns error? {
-    readonly & UserData user = pickLatestUser();
     string document = check getGraphQlDocumentFromFile("user-query");
+    readonly & UserData user = pickLatestUser();
     map<json> variables = {id: user.id};
     json response = check graphqlClient->execute(document, variables);
     json expectedResponse = {data: {user: {name: user.name, age: user.age}}};
@@ -39,9 +39,9 @@ isolated function testUserQuery() returns error? {
     dependsOn: [testUsersQuery]
 }
 isolated function testCreatePostMutation() returns error? {
-    readonly & UserData user = pickLatestUser();
     string document = check getGraphQlDocumentFromFile("create-post-mutation");
     map<json> variables = {title: "Post title", content: "Post content"};
+    readonly & UserData user = pickLatestUser();
     map<string> headers = {Authorization: user.id};
     json response = check graphqlClient->execute(document, variables, headers = headers);
     json expectedResponse = {data: {createPost: {author: user.toJson(), title: "Post title", content: "Post content"}}};
@@ -52,8 +52,8 @@ isolated function testCreatePostMutation() returns error? {
     dependsOn: [testCreatePostMutation]
 }
 isolated function testPostQuery() returns error? {
-    readonly & UserData user = pickLatestUser();
     string document = check getGraphQlDocumentFromFile("posts-query");
+    readonly & UserData user = pickLatestUser();
     map<json> variables = {id: user.id};
     json response = check graphqlClient->execute(document, variables);
     json expectedResponse = check getJsonContentFromFile("posts-query");
@@ -64,8 +64,8 @@ isolated function testPostQuery() returns error? {
     dependsOn: [testPostQuery]
 }
 isolated function testDeletePostMutation() returns error? {
-    readonly & UserData user = pickLatestUser();
     string document = check getGraphQlDocumentFromFile("posts-query-with-post-id");
+    readonly & UserData user = pickLatestUser();
     map<json> variables = {userId: user.id};
     UserPostResponse response = check graphqlClient->execute(document, variables);
     PostData[] userPosts = response.data.posts;
@@ -85,12 +85,12 @@ isolated function testDeletePostMutation() returns error? {
 }
 isolated function testPostSubscription() returns error? {
     worker publisher returns error? {
-        readonly & UserData user = pickLatestUser();
         string document = check getGraphQlDocumentFromFile("create-post-mutation");
         foreach int i in 0 ..< 5 {
             string title = string `Post title ${i}`;
             string content = string `Post content ${i}`;
             map<json> variables = {title, content};
+            readonly & UserData user = pickLatestUser();
             map<string> headers = {Authorization: user.id};
             json response = check graphqlClient->execute(document, variables, headers = headers);
             json expectedResponse = {data: {createPost: {author: user.toJson(), title, content}}};
@@ -118,8 +118,6 @@ isolated function testPostSubscription() returns error? {
     dependsOn: [testCreateUserMutation]
 }
 isolated function testAuthenticationFailure() returns error? {
-    readonly & UserData user = pickLatestUser();
-
     string document = check getGraphQlDocumentFromFile("create-post-mutation");
     map<json> variables = {title: "Post title", content: "Post content"};
     json response = check graphqlClient->execute(document, variables);
@@ -127,6 +125,7 @@ isolated function testAuthenticationFailure() returns error? {
     test:assertEquals(response, expectedResponse);
 
     document = check getGraphQlDocumentFromFile("delete-user-mutation");
+    readonly & UserData user = pickLatestUser();
     response = check graphqlClient->execute(document, {id: user.id});
     expectedResponse = check getJsonContentFromFile("authentication-failure-delete-user-mutation");
     test:assertEquals(response, expectedResponse);
