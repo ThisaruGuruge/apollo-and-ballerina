@@ -4,10 +4,7 @@ import { Post } from "../types/post.js";
 import { User } from "../types/user.js";
 import { UserContext } from "../utils.js";
 import { authenticate, authorize } from "../auth/auth.js";
-import { PubSub } from 'graphql-subscriptions';
-
-const POST_TOPIC = "post-created";
-const pubsub = new PubSub();
+import { publishPost, subscribePost } from "../kafka_utils.js";
 
 export const resolvers = {
     Query: {
@@ -24,7 +21,7 @@ export const resolvers = {
         },
 
         deleteUser: async (_parent: any, { id }, { token }: UserContext) => {
-            authenticate(token);
+            await authenticate(token);
             authorize(token, id);
             const user = await getUser(token);
             if (user) {
@@ -35,18 +32,16 @@ export const resolvers = {
         },
 
         createPost: async (_parent: any, { newPost: { title, content } }, { token }: UserContext) => {
-            authenticate(token);
+            await authenticate(token);
             const id = randomUUID();
             await createPost(id, token, title, content);
             const post = await getPost(id);
-            pubsub.publish(POST_TOPIC, {
-                newPosts: post
-            });
+            await publishPost(post);
             return post;
         },
 
         deletePost: async (_parent: any, { id }, { token }: UserContext) => {
-            authenticate(token);
+            await authenticate(token);
             const post = await getPost(id);
             if (!post) {
                 throw new Error("Post not found");
@@ -63,7 +58,11 @@ export const resolvers = {
 
     Subscription: {
         newPosts: {
-            subscribe: () => pubsub.asyncIterator([POST_TOPIC])
+            subscribe: () => {
+                // Create unique ID for the subscription
+                const uuid = randomUUID()
+                return subscribePost(uuid);
+            }
         }
     },
 

@@ -13,6 +13,7 @@
     "esModuleInterop": true,
     "types": [
       "node"
-    ]
-  }
+    ],
+  },
+  "exclude": ["ts/__tests__/*"],
 }

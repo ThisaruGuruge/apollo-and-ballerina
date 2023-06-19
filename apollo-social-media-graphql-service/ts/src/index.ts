@@ -26,7 +26,7 @@ const httpServer = createServer(app);
 
 const wsServer = new WebSocketServer({
     server: httpServer,
-    path: '/social-media',
+    path: '/graphql',
 });
 
 const serverCleanup = useServer({ schema }, wsServer);
@@ -49,7 +49,7 @@ const server = new ApolloServer<UserContext>({
 
 await server.start();
 app.use(
-    "/social-media",
+    "/graphql",
     cors<cors.CorsRequest>(),
     express.json(),
     expressMiddleware(server, {
@@ -58,5 +58,5 @@ app.use(
 );
 
 httpServer.listen(port, () => {
-    console.log(`🚀 Server ready at http://localhost:${port}/social-media`)
+    console.log(`🚀 Server ready at http://localhost:${port}/graphql`)
 });
