@@ -1,14 +1,16 @@
 import { Consumer, Kafka, KafkaConfig } from "kafkajs";
 import { Post } from "./types/post";
 import { EachMessagePayload } from "kafkajs";
-
-const POST_TOPIC = "post-created";
-const kafkaConfig: KafkaConfig = { brokers: ["localhost:9092"] };
-const kafka = new Kafka(kafkaConfig);
+import config from "config";
 
 interface NewPosts {
   newPosts: Post;
 }
+
+const POST_TOPIC = "post-created";
+const { port }: { port: number } = config.get("kafka");
+const kafkaConfig: KafkaConfig = { brokers: [`localhost:${port}`] };
+const kafka = new Kafka(kafkaConfig);
 
 export const publishPost = async (post: Post) => {
   const producer = kafka.producer();
@@ -65,7 +67,6 @@ class PostSubscriber implements AsyncIterator<NewPosts> {
   }
 
   private addPost(post: Post) {
-    console.log(post);
     if (this.pullQueue.length !== 0) {
       const value: NewPosts = { newPosts: post };
       this.pullQueue.shift()({ value, done: false });
